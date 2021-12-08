@@ -1,0 +1,38 @@
+---
+- name : install java
+  hosts : 54.212.29.73
+  gather_facts : true
+  become : yes
+  tasks:
+  - name: Create directory
+    file :
+      path : /home/ec2-user/tar
+      state : directory
+  - name : Updating repos
+    yum :
+      name : "*"
+      state : latest
+  - name : Installing OpenJDK 
+    yum :
+      name : java-1.8.0-openjdk
+      state : present
+  - name : Downloading tomcat
+    get_url :
+      url : https://dlcdn.apache.org/tomcat/tomcat-8/v8.5.73/bin/apache-tomcat-8.5.73.tar.gz
+      dest : /home/ec2-user/tar
+  - name : Extracting tomcat
+    unarchive :
+      src: "/home/ec2-user/tar/apache-tomcat-8.5.73.tar.gz"
+      dest : /home/ec2-user/tar
+      remote_src: yes
+  - name : Starting tomcat
+    shell : nohup /home/ec2-user/tar/tomcat/bin/startup.sh &
+  - name: Delete old war
+    command: rm -rf /home/ec2-user/tar/tomcat/webapps/*.war
+  - name: copying war file from host to remote server 
+    become : true
+   
+    copy: 
+        src: /var/lib/jenkins/workspace/webapp/webapp/target/webapp.war 
+        dest: /home/ec2-user/tar/tomcat/webapps/
+        remote_src: no
